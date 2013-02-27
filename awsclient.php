@@ -13,7 +13,7 @@ class AWSClient {
 		$aws = Aws::factory(array(
 			'key'    => Config::get('aws.aws_public'),
 			'secret' => Config::get('aws.aws_secret'),
-			'region' => Region::EU_WEST_1,
+			'region' => Region::US_WEST_1,
 			'ssl.certificate_authority' => __DIR__.'/awssdk2/cacert.pem'
 		));
 
@@ -50,10 +50,11 @@ class AWSClient {
 											'deleteObjects'	=> array('Require'=>array('Bucket', 'Objects'), 'Respose'=>array('Deleted','Errors','RequestId')),
 											'putObject'		=> array('Require'=>array('Bucket', 'Key', 'Body', 'ACL', 'ContentType'), 'Response'=>array('Expiration', 'ServerSideEncryption', 'ETag', 'VersionId', 'RequestId')),
 											'listObjects'	=> array('Require'=>array('Bucket'), 'Response'=>array('Marker', 'Contents', 'Name', 'Prefix','MaxKeys',' IsTruncated', 'CommonPrefixes', 'RequestId')),
+											'listMultipartUploads' => array('Require'=>array('Bucket'), 'Response'=>array('Bucket', 'Marker', 'Uploads')),
 										), /* End S3 */
 
-								'Ec2'=>array('describeInstances'=>array('Require'=>array(), 'Response'=>array('Reservations')),
-
+								'Ec2'=>array(	'describeInstances'=>array('Require'=>array(), 'Response'=>array('Reservations')),
+												'rebootInstances'=>array('Require'=>array('InstanceIds'), 'Response'=>array()),
 										)
 							); // serviceData.
 		
@@ -87,13 +88,17 @@ class AWSClient {
 			$argZero = ((count($args) >0) ? $args[0] : array());
 			$client = $aws->get($aws_service);
 			$aws_response = $client->$aws_method($argZero);
+			echo '<pre>';
+			var_dump($aws_response);
 			$returned_data = array();
+			array_push($aws_response_vars, 'Message');
 			foreach($aws_response_vars as $rVar) {
 				$returned_data[$rVar] = $aws_response[$rVar];
 			}
 
 			return $returned_data;
 		} catch(Exception $e) {
+			var_dump($e);
 			die("AWS Exception: ".$e->getMessage());
 		}
 	}
